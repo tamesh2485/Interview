@@ -1,4 +1,4 @@
-# Pre-Requisite of Cluster Upgrade? 
+👉 ################ Pre-Requisite of Cluster Upgrade?  ################
 
 ⦁	Cordon the nodes [ Make the node un schedulable ]
 ⦁	Backup critical data [ kubectl get all --all-namespaces -o yaml > cluster-backup.yaml ] 
@@ -10,8 +10,7 @@
 ⦁	At least 5 available IP Address are available in your subnet where cluster resides 
 ⦁	Kubelet that runs on all nodes , its version should also match the Control plane Version
 
-
-# Process of Cluster Upgrade? 
+👉 ################ Process of Cluster Upgrade?  ################
 
 ⦁	Upgrade Managed Control Plane - Note updates are not done automatically - Done  through [ UI / ekctl / CLI ]. We call it Managed Control Plane, because AWS maintains High Availability of Control plane, keeping control plane in different regions, takes care of  security, Scaling up our API server when requests increases. Thats why we call managed Control plane 
 
@@ -25,7 +24,7 @@
 
 ⦁	Upgrade the Add-Ons / Plugins 
 
-# How to Test the Upgrade?
+👉 ################ How to Test the Upgrade? ################
 Write a simple script, or run the  regression / functional   Test on the Upgraded Cluster. 
 
 a. Verify versions [ kubectl get nodes ] 
@@ -40,3 +39,173 @@ Autoscaling behavior
 --> Logs & metrics validation
 --> Ingress & load balancing checks
 --> Version verification for all add-ons
+
+👉 ################  Why can't we downgrade the cluster if something goes wrong? ################ 
+Because Kubernetes doesn’t support downgrading.
+Upgrades remove old API versions, changes the etcd schema, and modify controller behaviour.
+𝗔 𝗱𝗼𝘄𝗻𝗴𝗿𝗮𝗱𝗲 𝘄𝗼𝘂𝗹𝗱 𝗯𝗿𝗲𝗮𝗸:
+--> API servers
+--> CRDs
+--> DNS
+--> Networking
+--> Controllers
+So the only safe rollback is:
+Create a new cluster on the old version → migrate workloads.
+
+👉 ################ ImagePullBackoff Issue ################ 
+When a kubelet starts creating containers for a Pod using a container runtime, it might be possible the container is in Waiting state because of ImagePullBackOff.
+The status ImagePullBackOff means that a container could not start because Kubernetes could not pull a container image for reasons such as
+
+Invalid image name or
+Pulling from a private registry without imagePullSecret.
+
+# kubectl create secret docker-registry regcred --docker-server=<your-registry-server> --docker-username=<your-name> --docker-password=<your-pword> --docker-email=<your-email>
+where:
+<your-registry-server> is your Private Docker Registry FQDN. Use https://index.docker.io/v1/ for DockerHub.
+<your-name> is your Docker username.
+<your-pword> is your Docker password.
+<your-email> is your Docker email.
+
+# Create a Pod that uses your Secret
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: private-reg
+spec:
+  containers:
+  - name: private-reg-container
+    image: <your-private-image>
+  imagePullSecrets:
+  - name: regcred
+
+👉 ################ CrashLoopBackOff Issue - ################  
+
+When you see "CrashLoopBackOff," it means that kubelet is trying to run the container, but it keeps failing and crashing. After crashing, Kubernetes tries to restart the container automatically, but if the container keeps failing repeatedly, you end up in a loop of crashes and restarts, thus the term "CrashLoopBackOff."
+
+Misconfigurations - if wrong env variable or typo in env variable
+Wrong Command Line Arguments -  when wrong command or argument is passed in the manifest 
+The Memory Limits Are Too Low -  if there is resource request / limit issue leading to OOM  
+Errors in the Liveness Probes - Liveness probes in Kubernetes are used to check the health of a container. If a liveness probe is incorrectly configured, it might falsely report that the container is unhealthy,
+
+👉 ################ pods-not-schedulable Issue - ################ 
+Node selector , Taints and toleration, Node Affinity , Check the scheduler 
+
+👉 ################ A pod keeps Crashing , Why ? ################ 
+Check logs of pod # k logs pod_name 
+Check pod events  #k describe po pod_name 
+Check for resource limit
+Check how many times it restarted  # k get po -o wide 
+
+👉 ################  A Service is not reaching the correct pod ? ################ 
+Check for labels and selectors 
+Check if the pod is healthy 
+Check if it's due to network policy 
+Check the pod port and target port of the  service,and  see if something is wrongly set up 
+
+
+👉 ################ What is a PodDisruptionBudget (PDB)? ################ 
+
+A PodDisruptionBudget limits how many pods of an application can be voluntarily disrupted at the same time.
+Voluntary disruptions include:
+
+Node drains (for maintenance or upgrades)
+Cluster autoscaling (nodes being removed)
+Manual pod evictions
+
+You define one of these:
+
+minAvailable: minimum pods that must stay running
+maxUnavailable: maximum pods that can be unavailable
+
+👉 ################ 𝐏𝐨𝐝 𝐒𝐭𝐮𝐜𝐤 𝐢𝐧 𝐏𝐞𝐧𝐝𝐢𝐧𝐠 ################
+
+If a Kubernetes Pod is stuck in Pending, it means the pod was accepted by the cluster but cannot be scheduled or started. Below is a practical, step-by-step troubleshooting checklist used in real clusters.
+
+1. Check pod events [ kubectl describe pod <pod-name>] 
+Common messages you’ll see:
+
+Insufficient cpu
+Insufficient memory
+node(s) had taint
+no nodes available
+failed to pull image
+persistentvolumeclaim is not bound
+
+2. Check node availability & status
+Ensure:
+Nodes are Ready
+Not NotReady, SchedulingDisabled
+
+3. Resource requests too high
+4. PersistentVolumeClaim (PVC) issues
+5. Node selectors / affinity rules
+6. Taints and tolerations
+7. Image pull issues (sometimes Pending)
+8. Namespace resource quotas
+9. Scheduler issues (rare)
+
+👉 ################  𝐍𝐨𝐝𝐞 𝐢𝐧 𝐍𝐨𝐭𝐑𝐞𝐚𝐝𝐲 ################ 
+Kubelet down
+Disk pressure
+Network issues
+Fix:
+Restart kubelet
+Free disk space
+Fix node-control plane connectivity
+
+1️⃣ Check node status & reason
+kubectl get nodes
+kubectl describe node <node-name>
+Look for:
+Ready=False
+
+Conditions like:
+NetworkUnavailable
+KubeletNotReady
+ContainerRuntimeNotReady
+
+2️⃣ SSH into the node
+3️⃣ Check kubelet service
+
+Common problems:
+kubelet stopped
+cert expired
+cannot connect to API server
+disk pressure
+
+4️⃣ Check container runtime (Docker / containerd)
+sudo systemctl status containerd
+sudo journalctl -u containerd -n 50
+sudo systemctl restart containerd
+
+5️⃣ Disk, memory, or inode pressure
+6️⃣ Network / CNI issues
+If CNI plugin fails, node won’t be Ready.
+kubectl logs -n kube-system <cni-pod>
+8️⃣ Certificates expired
+sudo kubeadm certs check-expiration
+sudo kubeadm certs renew all
+sudo systemctl restart kubelet
+9️⃣ API server connectivity
+Node must reach API server on port 6443.
+sudo systemctl restart containerd kubelet
+
+👉 ################ 𝐈𝐧𝐠𝐫𝐞𝐬𝐬 𝐍𝐨𝐭 𝐖𝐨𝐫𝐤𝐢𝐧𝐠  ################ 
+If Kubernetes Ingress is not working, the issue is usually controller, service, DNS, or rules mismatch.
+1️⃣ Confirm Ingress Controller exists
+kubectl get pods -n ingress-nginx
+2️⃣ Check Ingress resource
+Correct HOST
+Correct SERVICE NAME
+Correct SERVICE PORT
+No errors in Events
+3️⃣ IngressClass mismatch
+4️⃣ Service behind Ingress
+5️⃣ Pods behind Service are healthy
+8️⃣ TLS / HTTPS problems
+Check:
+Secret exists
+Secret type is kubernetes.io/tls
+9️⃣ Check ingress controller logs
+kubectl logs -n ingress-nginx <controller-pod>
