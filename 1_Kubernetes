@@ -1,0 +1,42 @@
+# Pre-Requisite of Cluster Upgrade? 
+
+⦁	Cordon the nodes [ Make the node un schedulable ]
+⦁	Backup critical data [ kubectl get all --all-namespaces -o yaml > cluster-backup.yaml ] 
+⦁	Make sure we go through the Release notes [ 1.30 to 1.31 ] - Understand what changed between versions (ex: v1.30 → v1.31).
+⦁	We need to make sure We upgraded successfully in lower environments , Verify  everything is working in lower environment 
+⦁	Please note K8s cluster upgrade is irreversible, meaning we cannot downgrade . So Ensure we test upgrade in lower environment and make sure we touch production environment after 2-3 weeks 
+⦁	Control plane of Kubernetes and Worker nodes should be on same version 
+⦁	If we are using clusterAutoscaler, Make sure clusterAutoscaler version matches with the Control plane
+⦁	At least 5 available IP Address are available in your subnet where cluster resides 
+⦁	Kubelet that runs on all nodes , its version should also match the Control plane Version
+
+
+# Process of Cluster Upgrade? 
+
+⦁	Upgrade Managed Control Plane - Note updates are not done automatically - Done  through [ UI / ekctl / CLI ]. We call it Managed Control Plane, because AWS maintains High Availability of Control plane, keeping control plane in different regions, takes care of  security, Scaling up our API server when requests increases. Thats why we call managed Control plane 
+
+# eksctl upgrade cluster --name cluster_name --region us-east-1  --version 1.31
+# az aks upgrade   --resource-group <rg>   --name <cluster-name>   --kubernetes-version <target-version>   --control-plane-only
+
+⦁	Upgrade the node groups using the rollout process. If not using a node group, then we should upgrade the nodes 
+# Update using Rolling Update [ Both launch Templates and custom AMI ] 
+# az aks nodepool upgrade   --resource-group <rg>   --cluster-name <cluster-name>   --name <nodepool-name>   --kubernetes-version <target-version>
+
+
+⦁	Upgrade the Add-Ons / Plugins 
+
+# How to Test the Upgrade?
+Write a simple script, or run the  regression / functional   Test on the Upgraded Cluster. 
+
+a. Verify versions [ kubectl get nodes ] 
+b. Verify the kube-system pods [ kubectl get pods -n kube-system ] 
+c. Validate applications
+Logs & Metrics
+Ingress/services
+Autoscaling behavior
+
+--> Pod health & readiness checks
+--> Autoscaling tests
+--> Logs & metrics validation
+--> Ingress & load balancing checks
+--> Version verification for all add-ons
