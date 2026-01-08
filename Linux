@@ -1,0 +1,37 @@
+👉 ################ what is distributed fs ################ 
+A Distributed File System (DFS) is designed to manage and access files stored across multiple physical servers or nodes in a network. Example - HDFS , Example glusterFS 
+• Location Transparency: Users don’t need to know where files are physically stored.
+• Redundancy: Files are often replicated across nodes to prevent data loss.
+• Scalability: Easily accommodates growing data volumes by adding more nodes.
+Fault Tolerance: If one node fails, data can still be accessed from replicas.
+
+👉 ################  difference between SAN & NAS ################ 
+
+Here's a clear comparison between SAN (Storage Area Network) and NAS (Network Attached Storage) — two popular enterprise storage solutions:
+🧠 Key Differences Between SAN and NAS
+Feature	SAN (Storage Area Network)	NAS (Network Attached Storage)
+Access Type	Block-level access	File-level access
+Protocol Used	Fibre Channel, iSCSI	NFS, SMB/CIFS
+Performance	High-speed, low latency	Moderate speed, suitable for general file access
+Use Case	Databases, virtualization, high-performance apps	File sharing, backups, media storage
+
+👉 ################ differnce between ext2 & ext4  ################ 
+Feature	ext2	ext4
+Journaling	❌ No journaling	✅ Journaling supported
+Performance	Slower due to lack of journaling	Faster due to journaling and extents
+
+👉 ################ Journaling ################
+
+Journaling is a technique used in modern file systems to protect data integrity by recording changes in a special log (called a journal) before applying them to the main file system. This helps recover quickly and safely after crashes or power failures.
+
+🔄 How It Works:
+	1. Write-Ahead Logging: Before modifying files or metadata, the system writes a summary of the changes to the journal.
+	2. Commit Phase: Once the journal entry is safely written, the actual changes are applied to the file system.
+Recovery: If a crash occurs, the system reads the journal and completes or rolls back incomplete operations.
+
+👉 ################ what is inode & what does it contains ################
+An inode is a data structure used by Unix-like file systems to store metadata about a file or directory—excluding its name and actual data. It contains critical information like file size, ownership, permissions, timestamps, and pointers to data blocks.
+When a file system is created, a fixed number of inodes is allocated. Each inode is uniquely identified by an inode number, and the system uses this number to locate and manage files
+
+👉 ################  where is the filename stored ################
+In Linux and other Unix-like file systems, the filename is stored in the directory entry, not in the inode itself.
