@@ -35,3 +35,244 @@ When a file system is created, a fixed number of inodes is allocated. Each inode
 
 👉 ################  where is the filename stored ################
 In Linux and other Unix-like file systems, the filename is stored in the directory entry, not in the inode itself.
+
+👉 ################ what is raw device ################
+A raw device is that same block device accessed without formatting or mounting a file system.
+• /dev/sda → Entire disk as a raw device.
+/dev/sdb1 → A partition as a raw device.
+
+👉 ################ Rsync ################
+Rsync works by synchronizing files and directories between two locations, transferring only the differences (deltas) instead of copying everything, which makes it fast and efficient
+Basic sync (local):
+rsync -av /source/ /destination/
+Remote sync (over SSH):
+rsync -avz /local/path user@remote:/remote/path
+
+👉 ################ how would you check data integrity (data which is copied from rsync from prod to DR site)  ################
+
+✅ Methods to Check Data Integrity After Rsync
+1. Checksum Comparison
+Generate checksums (e.g., MD5, SHA256) for files on both source and destination.
+
+Compare the outputs to ensure they match.
+
+bash
+# On both source and destination
+find /path/to/files -type f -exec sha256sum {} \; > checksums.txt
+Then use diff or cmp to compare the checksum files.
+
+✅ 2. Rsync with --checksum Option
+Run rsync again with the --checksum flag to force a block-by-block comparison.
+
+bash
+rsync -avc --dry-run /source/ user@dr:/destination/
+-c tells rsync to use checksum comparison.
+
+--dry-run ensures no files are actually transferred—just checked.
+
+✅ 3. File Count and Size Comparison
+Use find, wc, and du to compare file counts and total sizes.
+
+bash
+# Count files
+find /source -type f | wc -l
+find /destination -type f | wc -l
+
+# Total size
+du -sh /source
+du -sh /destination
+✅ 4. Use diff or cmp for Specific Files
+For critical files, compare directly:
+
+bash
+diff /source/file /destination/file
+cmp /source/file /destination/file
+✅ 5. Automated Scripts
+Create a script that generates checksums, compares them, and logs discrepancies.
+
+Useful for large-scale or repeated integrity checks.
+
+🛡️ Best Practices
+Always run integrity checks after large transfers or before failover.
+
+Automate checks 
+
+👉 ################ how would you troubleshoot disk IO issues ################
+
+1. Identify Symptoms
+Slow application performance
+High load average
+Unresponsive system or delays in file access
+
+2. Check System Load - Use top or htop to see if high load is due to I/O wait:
+3. Use iostat for Disk Metrics
+iostat -xz 1
+
+Key metrics:
+r/s, w/s: read/write operations per second
+await: average wait time (high = bad)
+%util: disk utilization (near 100% = bottleneck)
+7. Check for File System Issues  - dmesg 
+8. Review Mount Options - Ensure optimal mount options (e.g., noatime) to reduce unnecessary writes.
+
+👉 ################ why do you use noatime flag to mount a partition in fstab  & what are advantages & why your application vendor suggested those settings? ################
+
+Using the noatime flag in /etc/fstab when mounting a partition is a performance optimization technique, especially useful for applications with frequent file reads.
+
+✅ Advantages of noatime
+Improved Performance: Reduces write operations, especially beneficial for read-heavy workloads.
+Less Disk Wear: Ideal for SSDs where write cycles are limited.
+Better Scalability: Helps in high-throughput environments like web servers or databases.
+
+#####
+
+14. in which boot section SELinux starts
+15. share your past experince of kernel space issues & user space issues
+16. differnce between enforcing & permissive values in SElinux
+17. tools you use to check real time performace of system & past performance of system
+18. in which situation you use lsof command
+19. if physical memory starts filling but you notice that you have 16Gb of swap availb but not been used
+20. who decide that swap should be used if physical memory starts filling
+21. when swap comes in picture
+22. how you do performance analysis & what recommendation you give to your clients to mitigate the issue
+
+***************
+
+1. what is rpc & what does it do
+2. what is portmapper & what is does
+3. when you mount a nfs share on client what happens in background
+4. what are the causes of slowness issue on NFS server
+5. when you try to access a NFS share. system gets hanged up so what will you do
+6. NFS server gets unresponsive what will you do
+7. NFS v3 vs V4
+8. a process is in D state what does that mean
+9. how would you kill D state process
+10. you see that system is doing lot of swapping what will you do
+11. what are pages
+12. difference between pages & swapping
+13. what is fragmentation & what impact does it have on performance
+14. what happens when you do defragmentation
+15. how would you troubleshoot network related issues
+16. on which FS you have worked
+17. have you worked on Distributed FS in Production environment
+18. what is quorum
+
+**************
+
+1. Which process has pid ‘1’ in Red Hat Enterprise Linux 7 ?
+2. Which of the following statement is incorrect about firewalld ?
+3. How to list the systemd unit files that failed to start after a reboot ?
+4. How to find the default runlevel/target in Red Hat Enterprise Linux 7 ?
+5. How to generate a new grub2 configuration file ?
+6. Which command will you execute to set a SELinux context on directory permanently ?
+ 7. How do you list the ip address on the system ?
+8. How do you list the default route on the system ?
+9. Which command will you use to list the PCI devices on the system ?
+11. Which command will you use to extend the logical volume /dev/mapper/root-var that has a XFS filesystem by 1 GB ?
+10. Which command will you use to create a soft link for file “a” ?
+How do you list the yum repositories configured on the system 
+
+6th column of an entry in /etc/fstab indicates
+What is the equivalent journalctl command for tail -f ?
+
+
+**************
+
+1) daily activity
+2) which distribution you have used
+3) what is NFS and how it's we can use NFS
+4) how to create a LVM
+5) how to create a file system 
+6) how to extend LV 
+7) what is yum
+8) where is configuration file of yum
+9) how to create a repositories 
+10) what is base URL 
+11) how to add connection in 
+12) scenario of RPM:
+I have 5 files a b c d e and all I have downloaded, when I am going to a file it is asking for dependency b when I am going to b it is asking for c file, if doing it is asking d and doing d is asking for e it all in the loop like these 5 files but if it is going to install e it is asking for f this dependency is going on continue, so how we can install?
+13) what is kik start
+14) what is 7 permission 
+15) what is that 7 permission 
+16) explain the value of the rwx
+17) port no of FTP
+18) what are the different types of the permission 
+19) how to set sticky bit permission 
+20) what is ACL, and how we can now the ACL for particular users
+21) how to add a user in particular group 
+22) boot process of Linux 
+23) what is compilation 
+24) what is Kernel tuning 
+25) how to extract bgip file
+26) how many partition we can create in HDD
+27) how to switch GUI to single user mode
+28) how we can set permanently boot the machine in single user mode
+29) path of the changing the runlevel 
+30) how DNS work
+31) how DHCP work
+32) difference between TCP and UDP
+33) how to know which all process is running in Linux 
+34) what is nmculi (something this they ask) 
+35) what is the port no of HTTP
+36) port no of SSH how it's work
+37) what is active directory 
+38) network layers osi layers
+39) how master slave DNS server work
+40)what is server-status , mpm, ssl handshake in Apache.
+41)diff between insmod and modprobe
+42) Kernal types
+43) what is authorative DNS server
+44) how to wwn number
+45) user is not able to login how to troubleshoot.
+46)diff between prerouting and postrouting in iptables
+47) what is meaning of run-parts in cron tab
+48)what is the MBR and the size of it, explain in detail
+49). is it possible to take backup of only magic number of MBR, if yes then how and if no then why
+50)what is load and what are three variants we get in uptime, explain all variants
+
+51) explain file system, not the types but what is file system
+
+52)what is journaling and explain the types of journaling
+
+53)explain all the runlevels
+
+54)difference between single user mode and linux rescue mode
+
+55)active and passive ftp
+
+
+
+**************
+
+Difference between yum and rpm?
+How to setup yum server?
+Difference between raid and lvm?
+How to add raw harddisk to lvm?
+web server is not accessable?
+ How to restrict ssh from particular ip?
+root not able to login?
+User not able to login?
+How to check open port on remote machine?
+How to change network interface name ?
+What is network bonding?
+If chmod binary permission is set to 000 how to correct?
+How ssh work,explain?
+Difference between xen and kvm?
+Security between samba use and system user?
+Difference between samba and nfs?
+How to share folder  using samba?
+System is slow?
+How client get ip using dhcp?
+how  get ip based log in sar ?
+special permission?
+Which location set sticky bit?
+How install package using yum?
+How to access samba share from client?
+How ftp server?
+How to disable anonymus access?
+Mail flow explain?
+Boot process?
+Difference between hardlink and soft link?
+What is acl?
+Crontab ?
+How to block particular user to set cron job in crontab?
