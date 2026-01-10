@@ -209,3 +209,28 @@ Secret exists
 Secret type is kubernetes.io/tls
 9️⃣ Check ingress controller logs
 kubectl logs -n ingress-nginx <controller-pod>
+
+#### RedHat Interview ######
+RedHat CKA Questions - 
+
+Explain k8s architecture
+Explain the role of kube proxy and kubelet 
+
+there are 3 master nodes , one master node is brought down , kubectl is not working , Why ? 
+
+what will happen if kubelet is not running? news pods will not run , what about the existing containers? will the be running ?
+
+Do you know , split etcd ? 
+
+Explain node Selector 
+
+lets say we have 2 replicas, 1 pod is running with no issue, the other when trying to place on worker node, its throwing crashbacklookup issue 
+There are 5 replicas , one pod is not running. How will you stop the traffic to unhealthy pod in order to troubleshoot? 
+
+
+ 
+Difference b/n git merge and git rebase 
+How do rollback the last comit in git ?
+
+https://www.linkedin.com/in/ay-garg/
+https://www.linkedin.com/in/apurvanisal/
